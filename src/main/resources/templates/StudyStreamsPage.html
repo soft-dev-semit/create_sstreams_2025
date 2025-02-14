@@ -1,0 +1,175 @@
+<!DOCTYPE HTML>
+<htl lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+>
+<head>
+    <title th:text="${title}"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<form class="m-3" th:action="@{/addGroups}" method="POST" enctype="multipart/form-data">
+    <label class="form-label" for="group">Завантажити групи студентів:</label>
+    <input class="form-control" style="display: inline; width: 320px;" type="file" id="group" name="groupDocument" accept=".xls, .xlsx"/>
+    <input class="btn btn-success" type="submit" value="Завантажити">
+</form>
+<form class="m-3" th:action="@{/addPlans}" method="POST" enctype="multipart/form-data">
+    <label class="form-label" for="plansAutumn">Завантажити плани навчання студентів:</label>
+    <input class="form-control" style="display: inline; width: 320px;" type="file" id="plansAutumn" name="plansDocument" accept=".xls, .xlsx"/>
+    <input class="btn btn-success" type="submit" value="Завантажити">
+</form>
+<div class=".container-sm m-3">
+    <button class="btn btn-primary showGroups">Групи</button>
+    <button class="btn btn-primary showPlansAutumn">Навчальні плани (Осінь)</button>
+    <button class="btn btn-primary showPlansSpring">Навчальні плани (Весна)</button>
+    <button class="btn btn-primary createStreamsAutumn">Створити потоки (Осінь)</button>
+    <button class="btn btn-primary createStreamsSpring">Створити потоки (Весна)</button>
+    <form style="display: inline" th:action="@{/createExcel}" method="POST">
+        <input class="btn btn-success" type="submit" value="Завантажити план навчального навантаження в Excel">
+    </form>
+    <table class="table table-warning table-striped table-hover table-bordered align-middle table1">
+        <tr>
+            <th>Код групи</th>
+            <th>Кількість студентів</th>
+            <th>Курс</th>
+        </tr>
+        <tr th:each="element : ${groups}">
+            <td th:text="${element.groupName}"></td>
+            <td th:text="${element.amountStudents}"></td>
+            <td th:text="${element.course}"></td>
+        </tr>
+    </table>
+    <table class="table table-warning table-striped table-hover table-bordered align-middle table2 d-none">
+        <tr>
+            <th>Назва курсу</th>
+            <th>Групи</th>
+            <th>Курс</th>
+            <th>Семестр</th>
+            <th>ECTS</th>
+            <th>Заг обс</th>
+            <th>Всього</th>
+            <th>Лек</th>
+            <th>Лаб</th>
+            <th>Прак</th>
+            <th>ІЗ</th>
+            <th>Залік</th>
+            <th>Екзамен</th>
+        </tr>
+        <tr th:each="element : ${plansSpring}">
+            <td th:text="${element.nameCourse}"></td>
+            <td th:text="${element.groupsNames}"></td>
+            <td th:text="${element.course}"></td>
+            <td th:text="${element.semestr}"></td>
+            <td th:text="${element.ects}"></td>
+            <td th:text="${element.hoursZagalObs}"></td>
+            <td th:text="${element.hoursAll}"></td>
+            <td th:text="${element.hoursLection}"></td>
+            <td th:text="${element.hoursLab}"></td>
+            <td th:text="${element.hoursPrak}"></td>
+            <td th:text="${element.indZadanie}"></td>
+            <td th:text="${element.zalik}"></td>
+            <td th:text="${element.exam}"></td>
+        </tr>
+    </table>
+    <table class="table table-warning table-striped table-hover table-bordered align-middle table3 d-none">
+        <tr>
+            <th>Назва курсу</th>
+            <th>Групи</th>
+            <th>Курс</th>
+            <th>Семестр</th>
+            <th>ECTS</th>
+            <th>Заг обс</th>
+            <th>Всього</th>
+            <th>Лек</th>
+            <th>Лаб</th>
+            <th>Прак</th>
+            <th>ІЗ</th>
+            <th>Залік</th>
+            <th>Екзамен</th>
+        </tr>
+        <tr th:each="element : ${plansAutumn}">
+            <td th:text="${element.nameCourse}"></td>
+            <td th:text="${element.groupsNames}"></td>
+            <td th:text="${element.course}"></td>
+            <td th:text="${element.semestr}"></td>
+            <td th:text="${element.ects}"></td>
+            <td th:text="${element.hoursZagalObs}"></td>
+            <td th:text="${element.hoursAll}"></td>
+            <td th:text="${element.hoursLection}"></td>
+            <td th:text="${element.hoursLab}"></td>
+            <td th:text="${element.hoursPrak}"></td>
+            <td th:text="${element.indZadanie}"></td>
+            <td th:text="${element.zalik}"></td>
+            <td th:text="${element.exam}"></td>
+        </tr>
+    </table>
+    <div class="table4 d-none">
+        <div class="block1" style="width: 100%; height: 80%">
+            <form style="display: inline" th:action="@{/createStreamsAutumn}" method="POST" enctype="multipart/form-data">
+                <input class="btn btn-secondary mt-1 mb-1" type="submit" value="Створити початкові потоки">
+            </form>
+            <form style="display: inline" th:action="@{/combineStreams}" method="POST" enctype="multipart/form-data">
+                <input class="btn btn-secondary mt-1 mb-1" name="combineStreams" type="submit" value="Об'єднати потоки">
+                <input class="btn btn-secondary mt-1 mb-1" name="splitStreams" type="submit" value="Роз'єднати поток">
+                    <table class="table table-warning table-striped table-hover table-bordered align-middle">
+                    <tr>
+                        <th>Створені потоки</th>
+                        <th>Назва курсу</th>
+                        <th>Групи у складі потоку</th>
+                        <th>Вибрати</th>
+                    </tr>
+                    <tr th:each="element : ${streamsAutumn}">
+                        <td th:text="${element.nameStream}"></td>
+                        <td>
+                            <table class="table table-hover table-bordered align-middle">
+                                <tr th:each="elem : ${element.streamsCoursesAutumns}">
+                                    <td><span th:text="${elem.courseName}"></span></td>
+                                </tr>
+                            </table>
+                        </td>
+                        <td th:text="${element.nameGroups.replaceAll(' ', ', ')}"></td>
+                        <td><input type="checkbox" name="streamCheck" th:value="${element.nameStream}"></td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+    </div>
+    <div class="table5 d-none">
+        <div class="block1" style="width: 100%; height: 80%">
+            <form style="display: inline" th:action="@{/createStreamsSpring}" method="POST" enctype="multipart/form-data">
+                <input class="btn btn-secondary mt-1 mb-1" type="submit" value="Створити початкові потоки">
+            </form>
+            <form style="display: inline" th:action="@{/combineStreamsSpring}" method="POST" enctype="multipart/form-data">
+                <input class="btn btn-secondary mt-1 mb-1" name="combineStreams" type="submit" value="Об'єднати потоки">
+                <input class="btn btn-secondary mt-1 mb-1" name="splitStreams" type="submit" value="Роз'єднати поток">
+                <table class="table table-warning table-striped table-hover table-bordered align-middle">
+                    <tr>
+                        <th>Створені потоки</th>
+                        <th>Назва курсу</th>
+                        <th>Групи у складі потоку</th>
+                        <th>Вибрати</th>
+                    </tr>
+                    <tr th:each="element : ${streamsSpring}">
+                        <td th:text="${element.nameStream}"></td>
+                        <td>
+                            <table class="table table-hover table-bordered align-middle">
+                                <tr th:each="elem : ${element.streamsCoursesSprings}">
+                                    <td><span th:text="${elem.courseName}"></span></td>
+                                </tr>
+                            </table>
+                        </td>
+                        <td th:text="${element.nameGroups.replaceAll(' ', ', ')}"></td>
+                        <td><input type="checkbox" name="streamCheck" th:value="${element.nameStream}"></td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+    </div>
+</div>
+<!--<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"></script>-->
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script th:src="@{/js/main.js}"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+</body>
+</htl>
