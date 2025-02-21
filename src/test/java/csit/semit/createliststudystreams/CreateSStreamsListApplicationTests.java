@@ -1,7 +1,9 @@
 package csit.semit.createliststudystreams;
 
 import csit.semit.createliststudystreams.entity.AcademicGroup;
+import csit.semit.createliststudystreams.entity.StreamsAutumn;
 import csit.semit.createliststudystreams.repository.GroupRepository;
+import csit.semit.createliststudystreams.repository.StreamsAutumnRepository;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
@@ -29,10 +31,23 @@ class CreateSStreamsListApplicationTests {
     @Autowired
     GroupRepository grrep;
 
+    @Autowired
+    StreamsAutumnRepository streamsAutumnRepository;
+
     @Test
     void testGroupsFromDB() {
         List<AcademicGroup> list = (List<AcademicGroup>) grrep.findAll();
         list.stream().forEach(System.out::println);
     }
+
+    @Test
+    void testStreamsFromDB() {
+        List<StreamsAutumn> streamsAutumn = (List<StreamsAutumn>) streamsAutumnRepository.findAll();
+        for (StreamsAutumn sa: streamsAutumn) {
+            System.out.println(sa);
+        }
+    }
+
+
 
 }

@@ -174,4 +174,13 @@ public class ExcelDataProcessingTest {
         assertEquals(ExcelDataProcessing.findAcademicGroupInList("КН-424а",testList),ag1);
 
     }
+
+    @Test
+    void testDefStreamName() {
+        String streamName = ExcelDataProcessing.defStudyStreamName("Lec","КН-224а, КН-224б, КН-224в, КН-224г");
+        assertEquals(streamName,"Lec_121_224а_224б_224в_224г");
+
+    }
+
+
 }

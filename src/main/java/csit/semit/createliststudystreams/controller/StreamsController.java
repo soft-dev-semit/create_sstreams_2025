@@ -28,6 +28,13 @@ import static csit.semit.createliststudystreams.excelutils.ExcelDataProcessing.p
 @Controller
 public class StreamsController {
 
+    private final ExcelDataProcessing excelDataProcessing;
+
+    @Autowired
+    public StreamsController(ExcelDataProcessing excelDataProcessing) {
+        this.excelDataProcessing = excelDataProcessing;
+    }
+
     @Autowired
     private GroupRepository groupRepository;
     @Autowired
@@ -36,8 +43,8 @@ public class StreamsController {
     private PlansSpringRepository plansSpringRepository;
     @Autowired
     private StreamsAutumnRepository streamsAutumnRepository;
-    @Autowired
-    private StreamsCoursesAutumnRepository streamsCoursesAutumnRepository;
+//    @Autowired
+//    private StreamsCoursesAutumnRepository streamsCoursesAutumnRepository;
     @Autowired
     private StreamsSpringRepository streamsSpringRepository;
     @Autowired
@@ -66,207 +73,16 @@ public class StreamsController {
 
 
     @PostMapping("/createStreamsAutumn")
-    public String createStreamsAutumn(Model model) throws IOException {
-        streamsAutumnRepository.deleteAll();
-        streamsCoursesAutumnRepository.deleteAll();
-        Iterable<PlansAutumn> plansAutumns = plansAutumnRepository.findAll();
-        Iterator<PlansAutumn> plans1 = plansAutumns.iterator();
-        while (plans1.hasNext()) {
-            PlansAutumn plans2 = plans1.next();
-            System.out.println(plans2.toString());
-            String courseName = "Lec";
-            String[] groups = plans2.getGroupsNames().split(", ");
-            String groupsToAdd = "";
-            for (String group : groups) {
-                Pattern pattern = Pattern.compile("-");
-                Matcher matcher = pattern.matcher(group);
-                String firstElm = "";
-                if (matcher.find()) {
-                    firstElm = group.substring(matcher.start());
-                }
-                char[] charGroup = firstElm.substring(1).toCharArray();
-                if (charGroup[0] == '4') {
-                    if (!courseName.contains("_122")) {
-                        courseName += "_122";
-                    }
-                } else if (charGroup[0] == '2') {
-                    if (!courseName.contains("_121")) {
-                        courseName += "_121";
-                    }
-                } else if (charGroup[0] == '7') {
-                    if (!courseName.contains("_126")) {
-                        courseName += "_126";
-                    }
-                }
-                String addGroup = group.substring(matcher.start());
-                courseName += "_" + addGroup.substring(1);
-                if (groupsToAdd == "") {
-                    groupsToAdd += group;
-                } else {
-                    groupsToAdd += " " + group;
-                }
-            }
-            StreamsAutumn streamsAutumn = new StreamsAutumn();
-            StreamsAutumn streamsAutumn2 = streamsAutumnRepository.findByNameStream(courseName);
-            if (streamsAutumn2 == null) {
-                streamsAutumn.setNameStream(courseName);
-                streamsAutumn.setNameGroups(groupsToAdd);
-                Set<StreamsCoursesAutumn> streamsCoursesAutumns = new HashSet<>();
-                StreamsCoursesAutumn streamsCoursesAutumn2 = new StreamsCoursesAutumn();
-                streamsCoursesAutumn2.setCourseName(plans2.getNameCourse());
-                streamsCoursesAutumn2.setCourse(plans2.getCourse());
-                streamsCoursesAutumn2.setSemestr(plans2.getSemestr());
-                streamsCoursesAutumn2.setEcts(plans2.getEcts());
-                streamsCoursesAutumn2.setHoursLection(plans2.getHoursLection());
-                streamsCoursesAutumn2.setIndZadanie(plans2.getIndZadanie());
-                streamsCoursesAutumn2.setZalik(plans2.getZalik());
-                streamsCoursesAutumn2.setExam(plans2.getExam());
-                streamsCoursesAutumns.add(streamsCoursesAutumn2);
-                streamsAutumn.setStreamsCoursesAutumns(streamsCoursesAutumns);
-                streamsAutumnRepository.save(streamsAutumn);
-            } else {
-                Set<StreamsCoursesAutumn> streamsCoursesAutumns = streamsAutumn2.getStreamsCoursesAutumns();
-                StreamsCoursesAutumn streamsCoursesAutumn2 = new StreamsCoursesAutumn();
-                streamsCoursesAutumn2.setCourseName(plans2.getNameCourse());
-                streamsCoursesAutumn2.setCourse(plans2.getCourse());
-                streamsCoursesAutumn2.setSemestr(plans2.getSemestr());
-                streamsCoursesAutumn2.setEcts(plans2.getEcts());
-                streamsCoursesAutumn2.setHoursLection(plans2.getHoursLection());
-                streamsCoursesAutumn2.setIndZadanie(plans2.getIndZadanie());
-                streamsCoursesAutumn2.setZalik(plans2.getZalik());
-                streamsCoursesAutumn2.setExam(plans2.getExam());
-                streamsCoursesAutumns.add(streamsCoursesAutumn2);
-                streamsAutumn2.setStreamsCoursesAutumns(streamsCoursesAutumns);
-                streamsAutumnRepository.save(streamsAutumn2);
-            }
+    public String createStreamsAutumn(Model model) {
 
-            System.out.println(courseName);
-            String[] groups2 = plans2.getGroupsNames().split(", ");
-            for (String group : groups2) {
-                if (plans2.getHoursLab() != 0) {
-                    String courseName2 = "Lab";
-                    Pattern pattern = Pattern.compile("-");
-                    Matcher matcher = pattern.matcher(group);
-                    String firstElm = "";
-                    if (matcher.find()) {
-                        firstElm = group.substring(matcher.start());
-                    }
-                    char[] charGroup = firstElm.substring(1).toCharArray();
-                    if (charGroup[0] == '4') {
-                        if (!courseName2.contains("_122")) {
-                            courseName2 += "_122";
-                        }
-                    } else if (charGroup[0] == '2') {
-                        if (!courseName2.contains("_121")) {
-                            courseName2 += "_121";
-                        }
-                    } else if (charGroup[0] == '7') {
-                        if (!courseName2.contains("_126")) {
-                            courseName2 += "_126";
-                        }
-                    }
-                    String addGroup = group;
-                    courseName2 += "_" + group.substring(matcher.start()).substring(1);
-                    StreamsAutumn streamsAutumnLab = new StreamsAutumn();
-                    StreamsAutumn streamsAutumn2Lab = streamsAutumnRepository.findByNameStream(courseName2);
-                    if (streamsAutumn2Lab == null) {
-                        streamsAutumnLab.setNameStream(courseName2);
-                        streamsAutumnLab.setNameGroups(addGroup);
-                        Set<StreamsCoursesAutumn> streamsCoursesAutumns = new HashSet<>();
-                        StreamsCoursesAutumn streamsCoursesAutumn2 = new StreamsCoursesAutumn();
-                        streamsCoursesAutumn2.setCourseName(plans2.getNameCourse());
-                        streamsCoursesAutumn2.setCourse(plans2.getCourse());
-                        streamsCoursesAutumn2.setSemestr(plans2.getSemestr());
-                        streamsCoursesAutumn2.setEcts(plans2.getEcts());
-                        streamsCoursesAutumn2.setHoursLab(plans2.getHoursLab());
-                        streamsCoursesAutumn2.setIndZadanie(plans2.getIndZadanie());
-                        streamsCoursesAutumn2.setZalik(plans2.getZalik());
-                        streamsCoursesAutumn2.setExam(plans2.getExam());
-                        streamsCoursesAutumns.add(streamsCoursesAutumn2);
-                        streamsAutumnLab.setStreamsCoursesAutumns(streamsCoursesAutumns);
-                        streamsAutumnRepository.save(streamsAutumnLab);
-                    } else {
-                        Set<StreamsCoursesAutumn> streamsCoursesAutumns = streamsAutumn2Lab.getStreamsCoursesAutumns();
-                        StreamsCoursesAutumn streamsCoursesAutumn2 = new StreamsCoursesAutumn();
-                        streamsCoursesAutumn2.setCourseName(plans2.getNameCourse());
-                        streamsCoursesAutumn2.setCourse(plans2.getCourse());
-                        streamsCoursesAutumn2.setSemestr(plans2.getSemestr());
-                        streamsCoursesAutumn2.setEcts(plans2.getEcts());
-                        streamsCoursesAutumn2.setHoursLab(plans2.getHoursLab());
-                        streamsCoursesAutumn2.setIndZadanie(plans2.getIndZadanie());
-                        streamsCoursesAutumn2.setZalik(plans2.getZalik());
-                        streamsCoursesAutumn2.setExam(plans2.getExam());
-                        streamsCoursesAutumns.add(streamsCoursesAutumn2);
-                        streamsAutumn2Lab.setStreamsCoursesAutumns(streamsCoursesAutumns);
-                        streamsAutumnRepository.save(streamsAutumn2Lab);
-                    }
-                    System.out.println(courseName2);
-                } else if (plans2.getHoursPrak() != 0) {
-                    String courseName2 = "Prak";
-                    Pattern pattern = Pattern.compile("-");
-                    Matcher matcher = pattern.matcher(group);
-                    String firstElm = "";
-                    if (matcher.find()) {
-                        firstElm = group.substring(matcher.start());
-                    }
-                    char[] charGroup = firstElm.substring(1).toCharArray();
-                    if (charGroup[0] == '4') {
-                        if (!courseName2.contains("_122")) {
-                            courseName2 += "_122";
-                        }
-                    } else if (charGroup[0] == '2') {
-                        if (!courseName2.contains("_121")) {
-                            courseName2 += "_121";
-                        }
-                    } else if (charGroup[0] == '7') {
-                        if (!courseName2.contains("_126")) {
-                            courseName2 += "_126";
-                        }
-                    }
-                    String addGroup = group;
-                    courseName2 += "_" + group.substring(matcher.start()).substring(1);
-                    StreamsAutumn streamsAutumnPrak = new StreamsAutumn();
-                    StreamsAutumn streamsAutumn2Prak = streamsAutumnRepository.findByNameStream(courseName2);
-                    if (streamsAutumn2Prak == null) {
-                        streamsAutumnPrak.setNameStream(courseName2);
-                        streamsAutumnPrak.setNameGroups(addGroup);
-                        Set<StreamsCoursesAutumn> streamsCoursesAutumns = new HashSet<>();
-                        StreamsCoursesAutumn streamsCoursesAutumn2 = new StreamsCoursesAutumn();
-                        streamsCoursesAutumn2.setCourseName(plans2.getNameCourse());
-                        streamsCoursesAutumn2.setCourse(plans2.getCourse());
-                        streamsCoursesAutumn2.setSemestr(plans2.getSemestr());
-                        streamsCoursesAutumn2.setEcts(plans2.getEcts());
-                        streamsCoursesAutumn2.setHoursPrak(plans2.getHoursPrak());
-                        streamsCoursesAutumn2.setIndZadanie(plans2.getIndZadanie());
-                        streamsCoursesAutumn2.setZalik(plans2.getZalik());
-                        streamsCoursesAutumn2.setExam(plans2.getExam());
-                        streamsCoursesAutumns.add(streamsCoursesAutumn2);
-                        streamsAutumnPrak.setStreamsCoursesAutumns(streamsCoursesAutumns);
-                        streamsAutumnRepository.save(streamsAutumnPrak);
-                    } else {
-                        Set<StreamsCoursesAutumn> streamsCoursesAutumns = streamsAutumn2Prak.getStreamsCoursesAutumns();
-                        StreamsCoursesAutumn streamsCoursesAutumn2 = new StreamsCoursesAutumn();
-                        streamsCoursesAutumn2.setCourseName(plans2.getNameCourse());
-                        streamsCoursesAutumn2.setCourse(plans2.getCourse());
-                        streamsCoursesAutumn2.setSemestr(plans2.getSemestr());
-                        streamsCoursesAutumn2.setEcts(plans2.getEcts());
-                        streamsCoursesAutumn2.setHoursPrak(plans2.getHoursPrak());
-                        streamsCoursesAutumn2.setIndZadanie(plans2.getIndZadanie());
-                        streamsCoursesAutumn2.setZalik(plans2.getZalik());
-                        streamsCoursesAutumn2.setExam(plans2.getExam());
-                        streamsCoursesAutumns.add(streamsCoursesAutumn2);
-                        streamsAutumn2Prak.setStreamsCoursesAutumns(streamsCoursesAutumns);
-                        streamsAutumnRepository.save(streamsAutumn2Prak);
-                    }
-                    System.out.println(courseName2);
-                }
-            }
-        }
-        Iterable<PlansAutumn> plansAutumn = plansAutumnRepository.findAll();
-        Iterable<StreamsAutumn> streamsAutumn = streamsAutumnRepository.findAll();
-        model.addAttribute("title", "StudyPlan");
-        model.addAttribute("plansAutumn", plansAutumn);
-        model.addAttribute("streamsAutumn", streamsAutumn);
+        //Формування потоків
+        excelDataProcessing.createStreamsAutumn();
+// Подвійне зчитування? Бо у @GetMapping("/") всі дані перечитуються ... ДАААА! Прибрав у всіх інших
+//        Iterable<PlansAutumn> plansAutumn = plansAutumnRepository.findAll();
+//        Iterable<StreamsAutumn> streamsAutumn = streamsAutumnRepository.findAll();
+//        model.addAttribute("title", "StudyPlan");
+//        model.addAttribute("plansAutumn", plansAutumn);
+//        model.addAttribute("streamsAutumn", streamsAutumn);
         return "redirect:/";
     }
 
@@ -307,8 +123,8 @@ public class StreamsController {
                     }
                     System.out.println(courseName);
                     System.out.println(group);
-                    Set<StreamsCoursesAutumn> streamsCoursesAutumn = streamsAutumn.getStreamsCoursesAutumns();
-                    Set<StreamsCoursesAutumn> streamsCoursesAutumnNew = new HashSet<>();
+                    SortedSet<StreamsCoursesAutumn> streamsCoursesAutumn = streamsAutumn.getStreamsCoursesAutumns();
+                    SortedSet<StreamsCoursesAutumn> streamsCoursesAutumnNew = new TreeSet<>();
                     for (StreamsCoursesAutumn elem : streamsCoursesAutumn) {
                         StreamsCoursesAutumn elem2 = new StreamsCoursesAutumn();
                         elem2.setCourseName(elem.getCourseName());
@@ -524,11 +340,11 @@ public class StreamsController {
                 }
             }
         }
-        Iterable<PlansSpring> plansSpring = plansSpringRepository.findAll();
-        Iterable<StreamsSpring> streamsSpring = streamsSpringRepository.findAll();
-        model.addAttribute("title", "StudyPlan");
-        model.addAttribute("plansAutumn", plansSpring);
-        model.addAttribute("streamsAutumn", streamsSpring);
+//        Iterable<PlansSpring> plansSpring = plansSpringRepository.findAll();
+//        Iterable<StreamsSpring> streamsSpring = streamsSpringRepository.findAll();
+//        model.addAttribute("title", "StudyPlan");
+//        model.addAttribute("plansAutumn", plansSpring);
+//        model.addAttribute("streamsAutumn", streamsSpring);
         return "redirect:/";
     }
 
@@ -585,7 +401,7 @@ public class StreamsController {
                 streamsSpringRepository.delete(streamsSpring);
             }
         }
-        model.addAttribute("title", "StudyPlan");
+//        model.addAttribute("title", "StudyPlan");
         return "redirect:/";
     }
 
@@ -630,7 +446,7 @@ public class StreamsController {
             }
         }
         fis.close();
-        model.addAttribute("title", "StudyPlan");
+//        model.addAttribute("title", "StudyPlan");
         return "redirect:/";
     }
 
@@ -756,7 +572,7 @@ public class StreamsController {
             list++;
         }
         fis.close();
-        model.addAttribute("title", "StudyPlan");
+//        model.addAttribute("title", "StudyPlan");
         return "redirect:/";
     }
 
@@ -766,9 +582,11 @@ public class StreamsController {
         List<AcademicGroup> academicGroups = (List<AcademicGroup>) groupRepository.findAll();
         List<StreamsSpring> streamsSpring = (List<StreamsSpring>) streamsSpringRepository.findAll();
         String resCreate = ExcelDataProcessing.createExcel(streamsAutumn, academicGroups, streamsSpring);
-        System.out.println("File created: "+resCreate);
+        System.out.println("File created: " + resCreate);
         return "redirect:/";
     }
+
+
 
 
 }
