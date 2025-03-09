@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 import static csit.semit.createliststudystreams.excelutils.ExcelDataProcessing.processCell;
 
@@ -51,7 +53,10 @@ public class StreamsController {
     private StreamsCoursesSpringRepository streamsCoursesSpringRepository;
 
     @GetMapping("/")
-    public String home(Model model) {
+    public String home(@RequestParam(required = false) String error, Model model) {
+        if (error != null && !error.isEmpty()) {
+            model.addAttribute("error", error);
+        }
 //        Iterable<AcademicGroup> groups = groupRepository.findAll();
 //        Iterable<PlansSpring> plansSpring = plansSpringRepository.findAll();
 //        Iterable<PlansAutumn> plansAutumn = plansAutumnRepository.findAll();
@@ -96,15 +101,57 @@ public class StreamsController {
             if (!combineStreams.isEmpty()) {
                 System.out.println("Start 1");
                 String[] streamToCombine = streamCheck.split(",");
+
+                // Get the first stream to validate types
                 StreamsAutumn streamsAutumn1 = streamsAutumnRepository.findByNameStream(streamToCombine[0]);
+
+                // Check if streams are of the same type (lecture, lab, practice, coursework)
+                if (!validateSameStreamType(streamToCombine)) {
+                    System.out.println("Помилка. Не можна об'єднати лекції, лаби, практики та курсові між собою.");
+                    return "redirect:/?error=" + URLEncoder.encode("Не можна об'єднати лекції, лаби, практики та курсові між собою.", StandardCharsets.UTF_8);
+                }
+
+                // Запрет объединения курсовых работ
+                String streamType = getStreamType(streamToCombine[0]);
+                if (streamType.equals("coursework") || streamsAutumn1.getNameStream().contains("KR")) {
+                    System.out.println("Помилка. Курсові потоки не можна об'єднувати.");
+                    return "redirect:/?error=" + URLEncoder.encode("Курсові потоки не можна об'єднувати.", StandardCharsets.UTF_8);
+                }
+
+                // Check for foreign group compatibility (containing 'е' symbol)
+                boolean hasForeignGroups = hasForeignGroupSymbol(streamsAutumn1.getNameGroups());
+
+                // Проверка специальностей для лабораторных и практических занятий
+                if (streamType.equals("lab") || streamType.equals("practice")) {
+                    String speciality1 = getStreamSpeciality(streamsAutumn1.getNameStream());
+                    for (int i = 1; i < streamToCombine.length; i++) {
+                        StreamsAutumn streamAutumn = streamsAutumnRepository.findByNameStream(streamToCombine[i]);
+                        String speciality2 = getStreamSpeciality(streamAutumn.getNameStream());
+                        if (!speciality1.equals(speciality2) || speciality1.isEmpty() || speciality2.isEmpty()) {
+                            System.out.println("Помилка. Не можна об'єднати групи з різних спеціальностей для лабораторних або практичних занять.");
+                            return "redirect:/?error=" + URLEncoder.encode("Не можна об'єднати групи з різних спеціальностей для лабораторних або практичних занять.", StandardCharsets.UTF_8);
+                        }
+                    }
+                }
+
                 String courseName = streamsAutumn1.getNameStream();
                 String addGroup = streamsAutumn1.getNameGroups();
+
                 for (int i = 1; i < streamToCombine.length; i++) {
                     StreamsAutumn streamsAutumn2 = streamsAutumnRepository.findByNameStream(streamToCombine[i]);
+
+                    // Check if foreign group status matches
+                    boolean currentHasForeignGroups = hasForeignGroupSymbol(streamsAutumn2.getNameGroups());
+                    if (hasForeignGroups != currentHasForeignGroups) {
+                        System.out.println("Помилка. Не можна об'єднати іноземні групи з іншими групами.");
+                        return "redirect:/?error=" + URLEncoder.encode("Не можна об'єднати іноземні групи з іншими групами.", StandardCharsets.UTF_8);
+                    }
+
                     addGroup += " " + streamsAutumn2.getNameGroups();
                     courseName += "_" + streamsAutumn2.getNameGroups();
                     streamsAutumnRepository.delete(streamsAutumn2);
                 }
+
                 streamsAutumn1.setNameStream(courseName);
                 streamsAutumn1.setNameGroups(addGroup);
                 streamsAutumnRepository.save(streamsAutumn1);
@@ -128,6 +175,15 @@ public class StreamsController {
                     for (StreamsCoursesAutumn elem : streamsCoursesAutumn) {
                         StreamsCoursesAutumn elem2 = new StreamsCoursesAutumn();
                         elem2.setCourseName(elem.getCourseName());
+                        elem2.setCourse(elem.getCourse());
+                        elem2.setSemestr(elem.getSemestr());
+                        elem2.setEcts(elem.getEcts());
+                        elem2.setHoursLection(elem.getHoursLection());
+                        elem2.setHoursLab(elem.getHoursLab());
+                        elem2.setHoursPrak(elem.getHoursPrak());
+                        elem2.setIndZadanie(elem.getIndZadanie());
+                        elem2.setZalik(elem.getZalik());
+                        elem2.setExam(elem.getExam());
                         streamsCoursesAutumnNew.add(elem2);
                     }
                     System.out.println(streamsCoursesAutumnNew);
@@ -141,6 +197,93 @@ public class StreamsController {
         }
         model.addAttribute("title", "StudyPlan");
         return "redirect:/";
+    }
+
+    /**
+     * Проверяет, содержит ли название группы символ 'е' (индикатор иностранной группы)
+     */
+    private boolean hasForeignGroupSymbol(String groupName) {
+        return groupName.contains("е");
+    }
+
+    /**
+     * Получает специальность из названия потока
+     * Например, для "Lec_121_420а" специальность будет "121"
+     */
+    private String getStreamSpeciality(String streamName) {
+        Pattern pattern = Pattern.compile("_\\d{3}");
+        Matcher matcher = pattern.matcher(streamName);
+        if (matcher.find()) {
+            // Извлекаем найденную подстроку без символа подчеркивания в начале
+            return streamName.substring(matcher.start() + 1, matcher.end());
+        }
+        return "";
+    }
+
+    /**
+     * Проверяет, что все потоки одного типа (лекции, лабы, практики, курсовые)
+     */
+    private boolean validateSameStreamType(String[] streamNames) {
+        if (streamNames.length <= 1) {
+            return true;
+        }
+
+        String firstStreamType = getStreamType(streamNames[0]);
+        if (firstStreamType.equals("unknown")) {
+            return false;
+        }
+
+        for (int i = 1; i < streamNames.length; i++) {
+            String currentStreamType = getStreamType(streamNames[i]);
+            if (!firstStreamType.equals(currentStreamType) || currentStreamType.equals("unknown")) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Определяет тип потока (лекция, лаба, практика, курсовая)
+     */
+    private String getStreamType(String streamName) {
+        StreamsAutumn stream = streamsAutumnRepository.findByNameStream(streamName);
+        if (stream == null || stream.getStreamsCoursesAutumns() == null || stream.getStreamsCoursesAutumns().isEmpty()) {
+            return "unknown";
+        }
+
+        // Проверяем на наличие KR в названии (курсовая работа)
+        if (stream.getNameStream().contains("KR")) {
+            return "coursework";
+        }
+
+        // Проверяем первый курс в потоке, чтобы определить тип занятия
+        StreamsCoursesAutumn firstCourse = stream.getStreamsCoursesAutumns().iterator().next();
+
+        // Определяем тип по часам в StreamsCoursesAutumn
+        if (firstCourse.getHoursLection() > 0) {
+            return "lecture";
+        } else if (firstCourse.getHoursLab() > 0) {
+            return "lab";
+        } else if (firstCourse.getHoursPrak() > 0) {
+            return "practice";
+        } else if (firstCourse.getIndZadanie() != null && !firstCourse.getIndZadanie().isEmpty()) {
+            return "coursework";
+        } else {
+            // Если не удалось определить по предыдущим критериям, проверяем по названию
+            String name = stream.getNameStream().toLowerCase();
+            if (name.contains("lec")) {
+                return "lecture";
+            } else if (name.contains("lab")) {
+                return "lab";
+            } else if (name.contains("prak")) {
+                return "practice";
+            } else if (name.contains("kr")) {
+                return "coursework";
+            } else {
+                return "unknown";
+            }
+        }
     }
 
     @PostMapping("/createStreamsSpring")
@@ -348,6 +491,49 @@ public class StreamsController {
         return "redirect:/";
     }
 
+    /**
+     * Определяет тип потока (лекция, лаба, практика, курсовая)
+     */
+    private String getStreamTypeSpring(String streamName) {
+        StreamsSpring stream = streamsSpringRepository.findByNameStream(streamName);
+        if (stream == null || stream.getStreamsCoursesSprings() == null || stream.getStreamsCoursesSprings().isEmpty()) {
+            return "unknown";
+        }
+
+        // Проверяем на наличие KR в названии (курсовая работа)
+        if (stream.getNameStream().contains("KR")) {
+            return "coursework";
+        }
+
+        // Проверяем первый курс в потоке, чтобы определить тип занятия
+        StreamsCoursesSpring firstCourse = stream.getStreamsCoursesSprings().iterator().next();
+
+        // Определяем тип по часам в StreamsCoursesSpring
+        if (firstCourse.getHoursLection() > 0) {
+            return "lecture";
+        } else if (firstCourse.getHoursLab() > 0) {
+            return "lab";
+        } else if (firstCourse.getHoursPrak() > 0) {
+            return "practice";
+        } else if (firstCourse.getIndZadanie() != null && !firstCourse.getIndZadanie().isEmpty()) {
+            return "coursework";
+        } else {
+            // Если не удалось определить по предыдущим критериям, проверяем по названию
+            String name = stream.getNameStream().toLowerCase();
+            if (name.contains("lec")) {
+                return "lecture";
+            } else if (name.contains("lab")) {
+                return "lab";
+            } else if (name.contains("prak")) {
+                return "practice";
+            } else if (name.contains("kr")) {
+                return "coursework";
+            } else {
+                return "unknown";
+            }
+        }
+    }
+
     @PostMapping("/combineStreamsSpring")
     public String combineStreamsSpring(@RequestParam(defaultValue = "") String streamCheck,
                                        @RequestParam(defaultValue = "") String combineStreams,
@@ -358,15 +544,57 @@ public class StreamsController {
             if (!combineStreams.isEmpty()) {
                 System.out.println("Start 1");
                 String[] streamToCombine = streamCheck.split(",");
+
+                // Get the first stream to validate types
                 StreamsSpring streamsSpring1 = streamsSpringRepository.findByNameStream(streamToCombine[0]);
+
+                // Check if streams are of the same type (lecture, lab, practice, coursework)
+                if (!validateSameStreamType(streamToCombine)) {
+                    System.out.println("Помилка. Не можна об'єднати лекції, лаби, практики та курсові між собою.");
+                    return "redirect:/?error=" + URLEncoder.encode("Не можна об'єднати лекції, лаби, практики та курсові між собою.", StandardCharsets.UTF_8);
+                }
+
+                // Запрет объединения курсовых работ
+                String streamType = getStreamTypeSpring(streamToCombine[0]);
+                if (streamType.equals("coursework") || streamsSpring1.getNameStream().contains("KR")) {
+                    System.out.println("Помилка. Курсові потоки не можна об'єднувати.");
+                    return "redirect:/?error=" + URLEncoder.encode("Курсові потоки не можна об'єднувати.", StandardCharsets.UTF_8);
+                }
+
+                // Check for foreign group compatibility (containing 'е' symbol)
+                boolean hasForeignGroups = hasForeignGroupSymbol(streamsSpring1.getNameGroups());
+
+                // Проверка специальностей для лабораторных и практических занятий
+                if (streamType.equals("lab") || streamType.equals("practice")) {
+                    String speciality1 = getStreamSpeciality(streamsSpring1.getNameStream());
+                    for (int i = 1; i < streamToCombine.length; i++) {
+                        StreamsSpring streamSpring = streamsSpringRepository.findByNameStream(streamToCombine[i]);
+                        String speciality2 = getStreamSpeciality(streamSpring.getNameStream());
+                        if (!speciality1.equals(speciality2) || speciality1.isEmpty() || speciality2.isEmpty()) {
+                            System.out.println("Помилка. Не можна об'єднати групи з різних спеціальностей для лабораторних або практичних занять.");
+                            return "redirect:/?error=" + URLEncoder.encode("Не можна об'єднати групи з різних спеціальностей для лабораторних або практичних занять.", StandardCharsets.UTF_8);
+                        }
+                    }
+                }
+
                 String courseName = streamsSpring1.getNameStream();
                 String addGroup = streamsSpring1.getNameGroups();
+
                 for (int i = 1; i < streamToCombine.length; i++) {
                     StreamsSpring streamsSpring2 = streamsSpringRepository.findByNameStream(streamToCombine[i]);
+
+                    // Check if foreign group status matches
+                    boolean currentHasForeignGroups = hasForeignGroupSymbol(streamsSpring2.getNameGroups());
+                    if (hasForeignGroups != currentHasForeignGroups) {
+                        System.out.println("Помилка. Не можна об'єднати іноземні групи з іншими групами.");
+                        return "redirect:/?error=" + URLEncoder.encode("Не можна об'єднати іноземні групи з іншими групами.", StandardCharsets.UTF_8);
+                    }
+
                     addGroup += " " + streamsSpring2.getNameGroups();
                     courseName += "_" + streamsSpring2.getNameGroups();
                     streamsSpringRepository.delete(streamsSpring2);
                 }
+
                 streamsSpring1.setNameStream(courseName);
                 streamsSpring1.setNameGroups(addGroup);
                 streamsSpringRepository.save(streamsSpring1);
@@ -375,7 +603,7 @@ public class StreamsController {
                 StreamsSpring streamsSpring = streamsSpringRepository.findByNameStream(streamCheck);
                 String[] groups = streamsSpring.getNameGroups().split(" ");
                 for (int i = 0; i < groups.length; i++) {
-                    Pattern pattern = Pattern.compile("-");
+                    Pattern pattern = Pattern.compile("[a-zA-Z]+_\\d{3}");
                     Matcher matcher = pattern.matcher(streamsSpring.getNameStream());
                     StreamsSpring streamsSpring2 = new StreamsSpring();
                     String courseName = "";
@@ -390,6 +618,15 @@ public class StreamsController {
                     for (StreamsCoursesSpring elem : streamsCoursesSpring) {
                         StreamsCoursesSpring elem2 = new StreamsCoursesSpring();
                         elem2.setCourseName(elem.getCourseName());
+                        elem2.setCourse(elem.getCourse());
+                        elem2.setSemestr(elem.getSemestr());
+                        elem2.setEcts(elem.getEcts());
+                        elem2.setHoursLection(elem.getHoursLection());
+                        elem2.setHoursLab(elem.getHoursLab());
+                        elem2.setHoursPrak(elem.getHoursPrak());
+                        elem2.setIndZadanie(elem.getIndZadanie());
+                        elem2.setZalik(elem.getZalik());
+                        elem2.setExam(elem.getExam());
                         streamsCoursesSpringNew.add(elem2);
                     }
                     System.out.println(streamsCoursesSpringNew);
@@ -401,7 +638,7 @@ public class StreamsController {
                 streamsSpringRepository.delete(streamsSpring);
             }
         }
-//        model.addAttribute("title", "StudyPlan");
+        model.addAttribute("title", "StudyPlan");
         return "redirect:/";
     }
 

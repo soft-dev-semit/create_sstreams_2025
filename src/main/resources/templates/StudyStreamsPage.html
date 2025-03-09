@@ -19,6 +19,10 @@
     <input class="form-control" style="display: inline; width: 320px;" type="file" id="plansAutumn" name="plansDocument" accept=".xls, .xlsx"/>
     <input class="btn btn-success upload-btn" type="submit" value="Завантажити">
 </form>
+<div class="alert alert-danger alert-dismissible fade show m-3" role="alert" th:if="${error}" id="errorAlert">
+    <strong>Помилка!</strong> <span th:text="${error}"></span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
 <div class="modal fade" id="loadingModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -147,10 +151,9 @@
                 <input class="btn btn-secondary mt-1 mb-1" name="combineStreams" type="submit" value="Об'єднати потоки">
                 <input class="btn btn-secondary mt-1 mb-1" name="splitStreams" type="submit" value="Роз'єднати поток">
 
-                <!-- Фильтр по группам -->
-                <div class="row mt-2 mb-2">
+                <div class="row mb-2">
                     <!-- Фильтр групп -->
-                    <div class="col-md-6">
+                    <div class="col-md-2 mt-2">
                         <div class="input-group">
                             <label class="input-group-text" for="groupFilter">Фільтр за групами:</label>
                             <select id="groupFilter" class="form-select">
@@ -164,7 +167,7 @@
                     </div>
 
                     <!-- Фильтр типов потоков -->
-                    <div class="col-md-6">
+                    <div class="col-md-2 mt-2">
                         <div class="input-group">
                             <label class="input-group-text" for="streamTypeFilter">Тип потоку:</label>
                             <select id="streamTypeFilter" class="form-select">
@@ -173,6 +176,42 @@
                                 <option value="Lab">Лабораторні (Lab)</option>
                                 <option value="Prak">Практичні (Prak)</option>
                                 <option value="KR">Курсові (KR)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Фильтр типов студентов -->
+                    <div class="col-md-2 mt-2">
+                        <div class="input-group">
+                            <label class="input-group-text" for="studentTypeFilter">Тип студентів:</label>
+                            <select id="studentTypeFilter" class="form-select">
+                                <option value="">Всі студенти</option>
+                                <option value="foreign">Іноземні студенти</option>
+                                <option value="ukrainian">Українські студенти</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Фильтр по специальности -->
+                    <div class="col-md-2 mt-2">
+                        <div class="input-group">
+                            <label class="input-group-text" for="specialtyCodeFilter">Код спеціальності:</label>
+                            <select id="specialtyCodeFilter" class="form-select">
+                                <option value="">Всі спеціальності</option>
+                                <option value="121">121</option>
+                                <option value="122">122</option>
+                                <option value="126">126</option>
+                                <option value="other">Інші</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Фильтр по курсу -->
+                    <div class="col-md-2 mt-2">
+                        <div class="input-group">
+                            <label class="input-group-text" for="courseFilter">Курс:</label>
+                            <select id="courseFilter" class="form-select">
+                                <option value="">Всі курси</option>
                             </select>
                         </div>
                     </div>
@@ -225,9 +264,9 @@
                 <input class="btn btn-secondary mt-1 mb-1" name="splitStreams" type="submit" value="Роз'єднати поток">
 
                 <!-- Фильтр по группам -->
-                <div class="row mt-2 mb-2">
+                <div class="row mb-2">
                     <!-- Фильтр групп -->
-                    <div class="col-md-6">
+                    <div class="col-md-2 mt-2">
                         <div class="input-group">
                             <label class="input-group-text" for="groupFilterSpring">Фільтр за групами:</label>
                             <select id="groupFilterSpring" class="form-select">
@@ -241,7 +280,7 @@
                     </div>
 
                     <!-- Фильтр типов потоков -->
-                    <div class="col-md-6">
+                    <div class="col-md-2 mt-2">
                         <div class="input-group">
                             <label class="input-group-text" for="streamTypeFilterSpring">Тип потоку:</label>
                             <select id="streamTypeFilterSpring" class="form-select">
@@ -250,6 +289,42 @@
                                 <option value="Lab">Лабораторні (Lab)</option>
                                 <option value="Prak">Практичні (Prak)</option>
                                 <option value="KR">Курсові (KR)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Фильтр типов студентов -->
+                    <div class="col-md-2 mt-2">
+                        <div class="input-group">
+                            <label class="input-group-text" for="studentTypeFilterSpring">Тип студентів:</label>
+                            <select id="studentTypeFilterSpring" class="form-select">
+                                <option value="">Всі студенти</option>
+                                <option value="foreign">Іноземні студенти</option>
+                                <option value="ukrainian">Українські студенти</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Фильтр по специальности -->
+                    <div class="col-md-2 mt-2">
+                        <div class="input-group">
+                            <label class="input-group-text" for="specialtyCodeFilterSpring">Код спеціальності:</label>
+                            <select id="specialtyCodeFilterSpring" class="form-select">
+                                <option value="">Всі спеціальності</option>
+                                <option value="121">121</option>
+                                <option value="122">122</option>
+                                <option value="126">126</option>
+                                <option value="other">Інші</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Фильтр по курсу -->
+                    <div class="col-md-2 mt-2">
+                        <div class="input-group">
+                            <label class="input-group-text" for="courseFilterSpring">Курс:</label>
+                            <select id="courseFilterSpring" class="form-select">
+                                <option value="">Всі курси</option>
                             </select>
                         </div>
                     </div>
@@ -296,71 +371,5 @@
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 <script th:src="@{/js/main.js}"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
-<script>
-    $(document).ready(function() {
-        $('.upload-form').on('submit', function() {
-            $('#loadingModal').modal('show');
-        });
-        $('.create-stream-form').on('submit', function() {
-            $('#loadingModal2').modal('show');
-        });
-        function applyFiltersAutumn() {
-            const selectedGroups = Array.from($('#groupFilter').find(':selected')).map(option => $(option).val());
-            const selectedTypes = Array.from($('#streamTypeFilter').find(':selected')).map(option => $(option).val());
-
-            $('.table4 .table tr:not(:first-child)').each(function() {
-                let showRow = true;
-
-                // Фильтр по группам
-                if (selectedGroups.length > 0) {
-                    const groupsCell = $(this).find('td:eq(2)').text();
-                    const matchesGroup = selectedGroups.some(group => groupsCell.includes(group));
-                    if (!matchesGroup) showRow = false;
-                }
-
-                // Фильтр по типу потока (Lec, Lab, Prak, KR)
-                if (selectedTypes.length > 0 && showRow) {
-                    const streamNameCell = $(this).find('td:eq(0)').text();
-                    const matchesType = selectedTypes.some(type => streamNameCell.includes(type));
-                    if (!matchesType) showRow = false;
-                }
-
-                // Показать или скрыть строку
-                $(this).toggle(showRow);
-            });
-        }
-
-        function applyFiltersSpring() {
-            const selectedGroups = Array.from($('#groupFilterSpring').find(':selected')).map(option => $(option).val());
-            const selectedTypes = Array.from($('#streamTypeFilterSpring').find(':selected')).map(option => $(option).val());
-
-            $('.table5 .table tr:not(:first-child)').each(function() {
-                let showRow = true;
-
-                // Фильтр по группам
-                if (selectedGroups.length > 0) {
-                    const groupsCell = $(this).find('td:eq(2)').text();
-                    const matchesGroup = selectedGroups.some(group => groupsCell.includes(group));
-                    if (!matchesGroup) showRow = false;
-                }
-
-                // Фильтр по типу потока (Lec, Lab, Prak, KR)
-                if (selectedTypes.length > 0 && showRow) {
-                    const streamNameCell = $(this).find('td:eq(0)').text();
-                    const matchesType = selectedTypes.some(type => streamNameCell.includes(type));
-                    if (!matchesType) showRow = false;
-                }
-
-                // Показать или скрыть строку
-                $(this).toggle(showRow);
-            });
-        }
-        // Привязка событий к фильтрам
-        $('#groupFilter, #streamTypeFilter').on('change', applyFiltersAutumn);
-
-        // Привязка событий к фильтрам
-        $('#groupFilterSpring, #streamTypeFilterSpring').on('change', applyFiltersSpring);
-    });
-</script>
 </body>
 </html>
