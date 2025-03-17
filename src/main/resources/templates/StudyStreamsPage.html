@@ -9,6 +9,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body>
+<!-- Модальное окно подтверждения объединения потоков -->
+<div class="modal fade" id="confirmCombineModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Підтвердження дії</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Ви впевнені, що хочете об'єднати обрані потоки?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                <button type="button" class="btn btn-primary" id="confirmCombine">Так, об'єднати</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Модальное окно подтверждения разъединения потоков -->
+<div class="modal fade" id="confirmSplitModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Підтвердження дії</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Ви впевнені, що хочете роз'єднати обраний потік?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                <button type="button" class="btn btn-primary" id="confirmSplit">Так, роз'єднати</button>
+            </div>
+        </div>
+    </div>
+</div>
 <form class="m-3 upload-form" th:action="@{/addGroups}" method="POST" enctype="multipart/form-data">
     <label class="form-label" for="group">Завантажити групи студентів:</label>
     <input class="form-control" style="display: inline; width: 320px;" type="file" id="group" name="groupDocument" accept=".xls, .xlsx"/>
@@ -147,7 +183,7 @@
             <form class="create-stream-form" style="display: inline" th:action="@{/createStreamsAutumn}" method="POST" enctype="multipart/form-data">
                 <input class="btn btn-secondary mt-1 mb-1" type="submit" value="Створити початкові потоки">
             </form>
-            <form style="display: inline" th:action="@{/combineStreams}" method="POST" enctype="multipart/form-data">
+            <form style="display: inline" id="formCombine" th:action="@{/combineStreams}" method="POST" enctype="multipart/form-data">
                 <input class="btn btn-secondary mt-1 mb-1" name="combineStreams" type="submit" value="Об'єднати потоки">
                 <input class="btn btn-secondary mt-1 mb-1" name="splitStreams" type="submit" value="Роз'єднати поток">
 
@@ -215,8 +251,10 @@
                             </select>
                         </div>
                     </div>
+                    <div class="col-md-2 mt-2">
+                        <button id="resetFiltersAutumn" class="btn btn-primary">Скинути фільтри</button>
+                    </div>
                 </div>
-
                 <div class="table-responsive mt-1" style="height:80vh">
                     <table class="table table-warning table-striped table-hover table-bordered align-middle">
                         <tr style="position: sticky; top: 0; z-index: 2;">
@@ -328,6 +366,10 @@
                             </select>
                         </div>
                     </div>
+
+                    <div class="col-md-2 mt-2">
+                        <button id="resetFiltersSpring" class="btn btn-primary">Скинути фільтри</button>
+                    </div>
                 </div>
 
                 <div class="table-responsive mt-1" style="height:80vh">
@@ -371,5 +413,58 @@
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 <script th:src="@{/js/main.js}"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+<script>
+    $(document).ready(function() {
+        // Обработка кнопок "Об'єднати потоки"
+        $('input[name="combineStreams"]').click(function(e) {
+            e.preventDefault();
+            let form = $(this).closest('form');
+            let buttonName = $(this).attr('name');
+            let buttonValue = $(this).val();
+
+            // Показываем модальное окно подтверждения
+            $('#confirmCombineModal').modal('show');
+
+            // Настраиваем кнопку подтверждения в модальном окне
+            $('#confirmCombine').off('click').on('click', function() {
+                $('#confirmCombineModal').modal('hide');
+
+                // Удаляем старое скрытое поле, если оно существует
+                form.find('input[type="hidden"][name="' + buttonName + '"]').remove();
+
+                // Добавляем скрытое поле с именем и значением нажатой кнопки
+                form.append('<input type="hidden" name="' + buttonName + '" value="' + buttonValue + '">');
+
+                // Отправляем форму
+                form.submit();
+            });
+        });
+
+        // Обработка кнопок "Роз'єднати поток"
+        $('input[name="splitStreams"]').click(function(e) {
+            e.preventDefault();
+            let form = $(this).closest('form');
+            let buttonName = $(this).attr('name');
+            let buttonValue = $(this).val();
+
+            // Показываем модальное окно подтверждения
+            $('#confirmSplitModal').modal('show');
+
+            // Настраиваем кнопку подтверждения в модальном окне
+            $('#confirmSplit').off('click').on('click', function() {
+                $('#confirmSplitModal').modal('hide');
+
+                // Удаляем старое скрытое поле, если оно существует
+                form.find('input[type="hidden"][name="' + buttonName + '"]').remove();
+
+                // Добавляем скрытое поле с именем и значением нажатой кнопки
+                form.append('<input type="hidden" name="' + buttonName + '" value="' + buttonValue + '">');
+
+                // Отправляем форму
+                form.submit();
+            });
+        });
+    });
+</script>
 </body>
 </html>
